@@ -28,5 +28,3 @@ A real-time collaborative whiteboard application that allows multiple users to d
 | DB (opt.)     | MongoDB / Firebase  |
 
 ---
-
-## 🏗️ Project Structure
