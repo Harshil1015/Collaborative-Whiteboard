@@ -1,42 +1,40 @@
-// 🧠 Import libraries
 import express from "express";
 import http from "http";
-import { WebSocketServer } from "ws";
 import cors from "cors";
+import { WebSocketServer } from "ws";
 
-// 🚪 Create an Express app
 const app = express();
-app.use(cors()); // Allows frontend to talk to backend
+app.use(cors());
+app.use(express.json());
 
-// 🌐 Create an HTTP server to work with WebSocket
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Server is working!" });
+});
+
 const server = http.createServer(app);
-
-// 🔌 Create a WebSocket server on top of HTTP
 const wss = new WebSocketServer({ server });
 
-// 🎧 Listen for WebSocket connections
-wss.on("connection", (socket) => {
-  console.log("✅ A user connected");
+wss.on("connection", (ws) => {
+  console.log("✅ A client connected");
 
-  // 🔁 When a message is received, send it to everyone else
-  socket.on("message", (data) => {
+  ws.on("message", (data) => {
     console.log("📩 Received:", data.toString());
 
+    // Broadcast to others
     wss.clients.forEach((client) => {
-      if (client !== socket && client.readyState === 1) {
-        client.send(data); // Send to others
+      if (client !== ws && client.readyState === 1) {
+        client.send(data);
       }
     });
   });
 
-  // ❌ User disconnected
-  socket.on("close", () => {
-    console.log("❌ A user disconnected");
+  ws.on("close", () => {
+    console.log("❌ Client disconnected");
   });
 });
 
-// 🚀 Start the server
 const PORT = 8080;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 HTTP:     http://localhost:${PORT}`);
+  console.log(`📡 WebSocket: ws://localhost:${PORT}`);
 });
