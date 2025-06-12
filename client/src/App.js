@@ -1,129 +1,96 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import * as fabric from "fabric";
+import socket from "./socket"; // WebSocket client
 
 function App() {
-  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
   const fabricRef = useRef(null);
 
-  const [selectedColor, setSelectedColor] = useState("#000000");
-  const [selectedShape, setSelectedShape] = useState("pencil");
+  useEffect(() => {
+    if (!canvasRef.current || fabricRef.current) return;
 
-  useLayoutEffect(() => {
-    if (!containerRef.current || fabricRef.current) return;
-
-    const canvasEl = document.createElement("canvas");
-    containerRef.current.appendChild(canvasEl);
-
-    const canvas = new fabric.Canvas(canvasEl, {
-      width: 800,
-      height: 600,
+    // 1. Initialize Fabric.js canvas
+    const fabricCanvas = new fabric.Canvas(canvasRef.current, {
+      isDrawingMode: true,
       backgroundColor: "#f0f0f0",
     });
 
-    // Set initial brush
-    canvas.isDrawingMode = true;
-    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-    canvas.freeDrawingBrush.color = selectedColor;
+    // 2. Set brush properties
+    fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas);
+    fabricCanvas.freeDrawingBrush.color = "green";
+    fabricCanvas.freeDrawingBrush.width = 4;
 
-    fabricRef.current = canvas;
+    // 3. Send path to WebSocket on draw
+    fabricCanvas.on("path:created", (e) => {
+      const pathData = e.path.toObject([
+        "path",
+        "stroke",
+        "strokeWidth",
+        "left",
+        "top",
+        "scaleX",
+        "scaleY",
+      ]);
+
+      const message = {
+        type: "draw",
+        payload: pathData,
+      };
+
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(message));
+      }
+    });
+
+    // 4. Receive messages and draw paths
+    socket.onmessage = async (event) => {
+      try {
+        const text = await event.data.text(); // Blob to string
+        const message = JSON.parse(text);
+
+        if (message.type === "draw" && message.payload) {
+          const path = new fabric.Path(message.payload.path, {
+            stroke: message.payload.stroke,
+            strokeWidth: message.payload.strokeWidth,
+            left: message.payload.left,
+            top: message.payload.top,
+            scaleX: message.payload.scaleX || 1,
+            scaleY: message.payload.scaleY || 1,
+            fill: null,
+            selectable: false,
+          });
+
+          fabricCanvas.add(path);
+          fabricCanvas.renderAll();
+        }
+      } catch (err) {
+        console.error("❌ Failed to handle message:", err);
+      }
+    };
+
+    // 5. Save canvas reference and cleanup
+    fabricRef.current = fabricCanvas;
 
     return () => {
-      canvas.dispose();
+      fabricCanvas.dispose();
+      fabricRef.current = null;
     };
   }, []);
 
-  // Update brush or mode when shape/color changes
-  useLayoutEffect(() => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-
-    if (selectedShape === "pencil") {
-      canvas.isDrawingMode = true;
-
-      if (!canvas.freeDrawingBrush) {
-        canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-      }
-
-      canvas.freeDrawingBrush.color = selectedColor;
-    } else {
-      canvas.isDrawingMode = false;
-    }
-  }, [selectedColor, selectedShape]);
-
-  const handleAddShape = () => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-
-    const commonProps = {
-      left: 150,
-      top: 150,
-      fill: selectedColor,
-    };
-
-    let shape;
-
-    switch (selectedShape) {
-      case "rect":
-        shape = new fabric.Rect({ ...commonProps, width: 100, height: 60 });
-        break;
-      case "circle":
-        shape = new fabric.Circle({ ...commonProps, radius: 40 });
-        break;
-      case "line":
-        shape = new fabric.Line([50, 100, 200, 100], {
-          stroke: selectedColor,
-          strokeWidth: 3,
-        });
-        break;
-      default:
-        return;
-    }
-
-    canvas.add(shape);
-    canvas.renderAll();
-  };
-
   return (
-    <div style={{ padding: "20px" }}>
-      <div style={{ marginBottom: "10px" }}>
-        <label>
-          🎨 Select Color:{" "}
-          <input
-            type="color"
-            value={selectedColor}
-            onChange={(e) => setSelectedColor(e.target.value)}
-          />
-        </label>
-
-        <label style={{ marginLeft: "20px" }}>
-          🔲 Select Shape:{" "}
-          <select
-            value={selectedShape}
-            onChange={(e) => setSelectedShape(e.target.value)}
-          >
-            <option value="pencil">Pencil</option>
-            <option value="rect">Rectangle</option>
-            <option value="circle">Circle</option>
-            <option value="line">Line</option>
-          </select>
-        </label>
-
-        <button
-          onClick={handleAddShape}
-          style={{ marginLeft: "20px", padding: "4px 10px" }}
-        >
-          ➕ Add Shape
-        </button>
-      </div>
-
-      <div
-        ref={containerRef}
+    <div style={{ textAlign: "center", padding: "20px" }}>
+      <h2>🖊️ Collaborative Whiteboard</h2>
+      <canvas
+        ref={canvasRef}
+        width={800}
+        height={600}
         style={{
-          border: "1px solid #ccc",
-          width: "800px",
-          height: "600px",
+          border: "2px solid black",
+          margin: "0 auto",
+          cursor: "crosshair",
         }}
       />
+      <p>🎨 Start drawing — it syncs in real-time across tabs!</p>
     </div>
   );
 }
