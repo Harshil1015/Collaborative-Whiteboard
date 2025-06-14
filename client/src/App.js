@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import JoinRoom from "./JoinRoom";
-import Whiteboard from "./Whiteboard";
+import JoinRoom from "./pages/JoinRoom";
+import Whiteboard from "./pages/Whiteboard";
 
 function App() {
   return (

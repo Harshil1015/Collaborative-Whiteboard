@@ -2,6 +2,12 @@ import http from "http";
 import WebSocket, { WebSocketServer } from "ws";
 import { parse } from "url";
 
+// Optional: You can store valid room-passwords here
+const roomPasswords = {
+  "design-team": "1234",
+  team1: "abcd",
+};
+const roomHistories = {}; // Stores path data per room
 const server = http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
   res.end(
@@ -16,14 +22,23 @@ const rooms = {};
 wss.on("connection", (ws, req) => {
   const parameters = parse(req.url, true);
   const roomId = parameters.query.room;
+  const password = parameters.query.password;
 
-  if (!roomId) {
-    ws.close();
+  // 🔐 Validate room ID and password
+  if (!roomId || !password || roomPasswords[roomId] !== password) {
+    console.log(`❌ Access denied to room: ${roomId}`);
+    ws.close(); // Deny connection
     return;
   }
 
+  // ✅ Valid connection
   if (!rooms[roomId]) rooms[roomId] = new Set();
   rooms[roomId].add(ws);
+  if (roomHistories[roomId]) {
+    roomHistories[roomId].forEach((drawMsg) => {
+      ws.send(JSON.stringify(drawMsg));
+    });
+  }
   ws.roomId = roomId;
 
   console.log(`✅ A client connected to room: ${roomId}`);
@@ -36,7 +51,12 @@ wss.on("connection", (ws, req) => {
       console.error("Invalid JSON:", err);
       return;
     }
-
+    // Save this message to the room's history
+    if (!roomHistories[roomId]) {
+      roomHistories[roomId] = [];
+    }
+    roomHistories[roomId].push(data);
+    // Broadcast to other users in same room
     rooms[roomId].forEach((client) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify(data));
