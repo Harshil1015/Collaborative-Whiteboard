@@ -1,26 +1,24 @@
 # 🖊️ Collaborative Whiteboard (WebSocket Edition)
 
-A real-time collaborative whiteboard built using **React**, **Fabric.js**, and native **WebSocket (`ws`)** for efficient peer communication. Designed for multi-user, low-latency collaboration over shared drawing spaces.
+A real-time collaborative whiteboard built with **React**, **Fabric.js**, and native **WebSocket (`ws`)**. Designed for fast, low-latency, multi-user drawing experiences across shared rooms.
 
 ---
 
 ## 🚀 Features
 
-- 🎨 Real-time collaborative drawing
-- ✏️ Pencil, shapes, eraser, colors, stroke width
-- 🧑‍🤝‍🧑 Room-based sessions using UUIDs
-- 🔁 Canvas synchronization using JSON events
-- 🧱 Built with WebSocket (`ws`) instead of Socket.IO
+- 🎨 Real-time collaborative canvas
+- ✏️ Free drawing with custom brush, color, and stroke width
+- 🧑‍🤝‍🧑 Room-based collaboration using dynamic URLs
+- 🔁 Canvas synchronization via JSON events
+- ⚡ Lightweight WebSocket implementation (no Socket.IO)
 
 ---
 
 ## 🧰 Tech Stack
 
-| Layer         | Technology          |
-| ------------- | ------------------- |
-| Frontend      | React.js, Fabric.js |
-| Realtime Comm | WebSocket (`ws`)    |
-| Backend       | Node.js, Express    |
-| Hosting       | Vercel + Render     |
-
----
+| Layer         | Technology                          |
+| ------------- | ----------------------------------- |
+| Frontend      | React.js, Fabric.js                 |
+| Realtime Comm | WebSocket (`ws`)                    |
+| Backend       | Node.js, Express                    |
+| Hosting       | Vercel (frontend), Render (backend) |
