@@ -1,7 +1,7 @@
 let socket = null;
+let onPathCallback = null;
 
 export function connectWebSocket(roomId, password) {
-  // Include both room and password in query params
   socket = new WebSocket(
     `ws://localhost:8080?room=${roomId}&password=${password}`
   );
@@ -18,6 +18,17 @@ export function connectWebSocket(roomId, password) {
     console.error("❌ WebSocket error:", error);
   };
 
+  // When receiving a message, forward to handler
+  socket.onmessage = (event) => {
+    if (!onPathCallback) return;
+    try {
+      const data = JSON.parse(event.data);
+      onPathCallback(data);
+    } catch (err) {
+      console.error("❌ Failed to parse incoming message:", err);
+    }
+  };
+
   return socket;
 }
 
@@ -28,16 +39,7 @@ export function sendPath(data) {
   }
 }
 
-// Listen to drawing updates from server
+// Register callback for received paths
 export function onPathReceived(callback) {
-  if (!socket) return;
-
-  socket.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      callback(data);
-    } catch (err) {
-      console.error("❌ Failed to parse incoming message:", err);
-    }
-  };
+  onPathCallback = callback;
 }
