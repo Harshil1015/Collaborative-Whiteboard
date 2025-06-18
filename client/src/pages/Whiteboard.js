@@ -13,43 +13,49 @@ function Whiteboard() {
   const fabricRef = useRef(null);
 
   useEffect(() => {
+    let fabricCanvas;
     const socket = connectWebSocket(roomId, password);
 
-    if (!canvasRef.current) return;
+    // Delay setup until canvas is in the DOM
+    const setupCanvas = () => {
+      if (!canvasRef.current) return;
 
-    const fabricCanvas = new Canvas(canvasRef.current, {
-      backgroundColor: "#f0f0f0",
-    });
+      fabricCanvas = new Canvas(canvasRef.current, {
+        backgroundColor: "#f0f0f0",
+        isDrawingMode: true,
+      });
 
-    const brush = new PencilBrush(fabricCanvas);
-    brush.color = "green";
-    brush.width = 4;
-    fabricCanvas.freeDrawingBrush = brush;
-    fabricCanvas.isDrawingMode = true;
+      const brush = new PencilBrush(fabricCanvas);
+      brush.color = "green";
+      brush.width = 4;
+      fabricCanvas.freeDrawingBrush = brush;
 
-    fabricRef.current = fabricCanvas;
+      fabricRef.current = fabricCanvas;
 
-    // Sync: Drawings received from other users
-    onPathReceived((data) => {
-      if (data.type === "path" && data.path) {
-        util.enlivenObjects([data.path], (objects) => {
-          objects.forEach((obj) => {
-            fabricCanvas.add(obj);
+      // When receiving drawing from others
+      onPathReceived((data) => {
+        if (data.type === "path" && data.path) {
+          util.enlivenObjects([data.path], (objects) => {
+            objects.forEach((obj) => {
+              fabricCanvas.add(obj);
+            });
+            fabricCanvas.renderAll();
           });
-          fabricCanvas.renderAll();
-        });
-      }
-    });
+        }
+      });
 
-    // Sync: Send own drawing
-    fabricCanvas.on("path:created", (e) => {
-      const path = e.path;
-      sendPath({ type: "path", path: path.toObject() });
-    });
+      // When drawing a new path
+      fabricCanvas.on("path:created", (e) => {
+        sendPath({ type: "path", path: e.path.toObject() });
+      });
+    };
+
+    // Ensure canvas is fully mounted before using
+    requestAnimationFrame(setupCanvas);
 
     return () => {
-      if (fabricRef.current) {
-        fabricRef.current.dispose();
+      if (fabricCanvas) {
+        fabricCanvas.dispose();
         fabricRef.current = null;
       }
     };
