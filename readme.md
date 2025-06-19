@@ -14,7 +14,7 @@ A real-time collaborative whiteboard built with **React**, **Fabric.js**, and na
 
 ---
 
-## 🧰 Tech Stack
+## 🧰 Tech Stack 
 
 | Layer         | Technology                          |
 | ------------- | ----------------------------------- |
