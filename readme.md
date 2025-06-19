@@ -14,7 +14,7 @@ A real-time collaborative whiteboard built with **React**, **Fabric.js**, and na
 
 ---
 
-## 🧰 Tech Stack 
+## 🧰 Tech Stack
 
 | Layer         | Technology                          |
 | ------------- | ----------------------------------- |
@@ -22,5 +22,3 @@ A real-time collaborative whiteboard built with **React**, **Fabric.js**, and na
 | Realtime Comm | WebSocket (`ws`)                    |
 | Backend       | Node.js, Express                    |
 | Hosting       | Vercel (frontend), Render (backend) |
-
-fwisukb
