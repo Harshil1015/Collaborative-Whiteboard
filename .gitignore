@@ -31,12 +31,12 @@ Thumbs.db
 .env.production.local
 
 # Fabric.js generated JSON (if you export canvas states)
-*.json
+
 
 # coverage from tests
 coverage/
 
 # Optional: package manager lock files (if you only use one consistently)
 # yarn.lock
-# package-lock.json
+
 # pnpm-lock.yaml
